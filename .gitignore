@@ -1,0 +1,30 @@
+# Created by venv; see https://docs.python.org/3/library/venv.html
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environment
+venv/
+ENV/
+env/
+
+# Data Folders (Matching your 'Datat' typo from the screenshot)
+Datat/
+data/
+datasets/
+
+# Large files and Model weights
+*.zip
+*.tar.gz
+*.pth
+*.onnx
+*.weights
+
+# IDE specific files
+.vscode/
+.idea/
+.DS_Store
+
+# Log files
+*.log
