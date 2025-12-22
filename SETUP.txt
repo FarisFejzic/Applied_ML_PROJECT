@@ -1,0 +1,14 @@
+--- PROJECT SETUP INSTRUCTIONS ---
+
+1. DATA FOLDER:
+   - Create a folder named 'Datat' in the root directory.
+   - Download the MVTec AD dataset.
+   - Place categories (e.g., bottle, cable) inside: Datat/MVTecAD/
+
+2. ENVIRONMENT:
+   - Create a virtual environment: python -m venv venv
+   - Activate it: .\venv\Scripts\activate
+   - Install libraries: pip install -r requirements.txt
+
+3. RUNNING:
+   - Run 'python main.py' to execute the detection system.
