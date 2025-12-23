@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from torchvision import transforms
+from pytorch_msssim import ssim
 from dataset import MVTecDataset
 from model import Autoencoder
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
@@ -22,7 +23,10 @@ def evaluate_and_plot(category):
     # 3. Store Results
     y_true = []
     y_pred = []
-    threshold = 0.00045
+    
+    
+    with open(f"threshold_{category}.txt", "r") as f:
+        threshold = float(f.read())
 
     print(f"Testing {len(test_dataset)} images...")
 
@@ -33,7 +37,10 @@ def evaluate_and_plot(category):
             
             # Reconstruction and scoring
             reconstruction = model(img)
-            score = torch.mean((img - reconstruction) ** 2).item()
+            loss_mse = torch.mean((img - reconstruction) ** 2).item()
+            loss_ssim = (1 - ssim(reconstruction, img, data_range=1.0)).item()
+            
+            score = loss_mse + loss_ssim
             # label is 0 for Good and 1 for Anomaly/Bad in MVTec
             if label == 0:
                 print(f"Good score     {score} \n")
