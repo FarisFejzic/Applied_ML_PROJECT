@@ -8,68 +8,73 @@ from dataset import MVTecDataset
 from model import Autoencoder      
 
 def train_model(category):
-    # 1. Hyperparameters (The settings for the "Engine")
+    # 1. Hyperparameters
     batch_size = 16
-    epochs = 200        # How many times the model sees the whole dataset
+    epochs = 300 # Limit increased to 300
     learning_rate = 1e-3 
     image_size = 224      
+    
+    # Early Stopping Parameters
+    patience = 5 # Patience kept at 5
+    patience_counter = 0
+    best_loss = float('inf')
+
     # 2. Data Preparation
-    # We only train on 'good' images, so is_train is True
     transform = transforms.Compose([transforms.Resize((image_size, image_size)),transforms.ToTensor(),])
-    
     train_dataset = MVTecDataset(root_dir="Datat/MVTecAD", category=category, is_train=True, transform=transform)
-    
-    # DataLoader handles shuffling the images so the model doesn't memorize the order
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 
-    # Model, Loss, and Optimizer
+    # 3. Model, Loss, and Optimizer
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = Autoencoder().to(device)
-    
     criterion = nn.MSELoss() 
-    
-    # Adam is a popular optimizer that automatically adjusts the learning rate
-    optimizer = optim.Adam(model.parameters(), learning_rate)
+    optimizer = optim.Adam(model.parameters(), learning_rate, weight_decay=1e-4)
+
+    # NEW: ReduceLROnPlateau Scheduler
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.2, patience=3)
 
     # 4. The Training Loop
     print(f"Starting training for {category}...")
-    model.train()
     
     for epoch in range(epochs):
+        model.train()
         running_loss = 0.0
         for data in train_loader:
-            
             imgs = data['image'].to(device)
-
             
-            # Step A: Clear previous gradients
             optimizer.zero_grad()
-            
-            # Step B: Forward Pass 
             outputs = model(imgs)
             
-            # Step C: Calculate Loss
-            loss = criterion(outputs, imgs)
+            loss_mse = criterion(outputs, imgs)
             loss_ssim = 1 - ssim(outputs, imgs, data_range=1, size_average=True)
+            loss = loss_mse + loss_ssim
             
-            # Combine them: 50% MSE, 50% SSIM
-            loss = loss + loss_ssim
-            
-            # Step D: Backward Pass
             loss.backward()
-            
-            # Step E: Update Weights
             optimizer.step()
-
             running_loss += loss.item()
         
-        # Print progress every epoch
-        print(f"Epoch [{epoch+1}/{epochs}], Loss: {running_loss/len(train_loader)}")
+        epoch_loss = running_loss / len(train_loader)
+        
+        # Update Scheduler based on epoch loss
+        scheduler.step(epoch_loss)
+        
+        current_lr = optimizer.param_groups[0]['lr']
+        print(f"Epoch [{epoch+1}/{epochs}], Loss: {epoch_loss:.6f}, LR: {current_lr}")
 
-    # 5. Save the weights so we can use them for Testing later
-    torch.save(model.state_dict(), f"autoencoder_{category}.pth")
-    print(f"Training complete! Model saved as autoencoder_{category}.pth")
+        # Early Stopping Logic
+        if epoch_loss < best_loss:
+            best_loss = epoch_loss
+            patience_counter = 0
+            torch.save(model.state_dict(), f"autoencoder_{category}.pth")
+        else:
+            patience_counter += 1
+            print(f"EarlyStopping counter: {patience_counter} out of {patience}")
+
+        if patience_counter >= patience:
+            print(f"Early stopping triggered at epoch {epoch+1}.")
+            break
+
+    print(f"Training complete! Best model saved as autoencoder_{category}.pth")
 
 if __name__ == "__main__":
-    # You can loop through all your categories here
-    train_model("bottle")
+    train_model("cable")

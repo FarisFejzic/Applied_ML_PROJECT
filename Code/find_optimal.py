@@ -58,4 +58,4 @@ def calculate_threshold(category, k=4):
     print(f"Threshold saved to threshold_{category}.txt")
 
 if __name__ == "__main__":
-    calculate_threshold("bottle")
+    calculate_threshold("cable")

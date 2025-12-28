@@ -17,7 +17,6 @@ datasets/
 # Large files and Model weights
 *.zip
 *.tar.gz
-*.pth
 *.onnx
 *.weights
 

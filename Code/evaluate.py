@@ -25,8 +25,7 @@ def evaluate_and_plot(category):
     y_pred = []
     
     
-    with open(f"threshold_{category}.txt", "r") as f:
-        threshold = float(f.read())
+    threshold = 0.12
 
     print(f"Testing {len(test_dataset)} images...")
 
@@ -69,4 +68,4 @@ def evaluate_and_plot(category):
 
 if __name__ == "__main__":
     import numpy as np # Adding numpy for accuracy calculation
-    evaluate_and_plot("bottle")
+    evaluate_and_plot("cable")
