@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -10,12 +11,12 @@ from model import Autoencoder
 def train_model(category):
     # 1. Hyperparameters
     batch_size = 16
-    epochs = 300 # Limit increased to 300
+    epochs = 300
     learning_rate = 1e-3 
     image_size = 224      
     
     # Early Stopping Parameters
-    patience = 5 # Patience kept at 5
+    patience = 10
     patience_counter = 0
     best_loss = float('inf')
 
@@ -30,9 +31,9 @@ def train_model(category):
     criterion = nn.MSELoss() 
     optimizer = optim.Adam(model.parameters(), learning_rate, weight_decay=1e-4)
 
-    # NEW: ReduceLROnPlateau Scheduler
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.2, patience=3)
 
+    loss_history = []
+    
     # 4. The Training Loop
     print(f"Starting training for {category}...")
     
@@ -54,12 +55,9 @@ def train_model(category):
             running_loss += loss.item()
         
         epoch_loss = running_loss / len(train_loader)
+        loss_history.append(epoch_loss)
         
-        # Update Scheduler based on epoch loss
-        scheduler.step(epoch_loss)
-        
-        current_lr = optimizer.param_groups[0]['lr']
-        print(f"Epoch [{epoch+1}/{epochs}], Loss: {epoch_loss:.6f}, LR: {current_lr}")
+        print(f"Epoch [{epoch+1}/{epochs}], Loss: {epoch_loss:.6f}")
 
         # Early Stopping Logic
         if epoch_loss < best_loss:
@@ -74,7 +72,10 @@ def train_model(category):
             print(f"Early stopping triggered at epoch {epoch+1}.")
             break
 
+
+    np.save(f"loss_history_{category}.npy", np.array(loss_history))
+    print(f"Loss history saved to loss_history_{category}.npy")
     print(f"Training complete! Best model saved as autoencoder_{category}.pth")
 
 if __name__ == "__main__":
-    train_model("cable")
+    train_model("bottle")

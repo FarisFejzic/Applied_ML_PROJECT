@@ -5,29 +5,47 @@ from torchvision import transforms
 from pytorch_msssim import ssim
 from dataset import MVTecDataset
 from model import Autoencoder
-from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, accuracy_score, precision_score, f1_score, recall_score
 import matplotlib.pyplot as plt
 
 def evaluate_and_plot(category):
-    # 1. Setup & Load Model
+    
+    # Setup & Load Model
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = Autoencoder().to(device)
     model.load_state_dict(torch.load(f"autoencoder_{category}.pth"))
     model.eval()
 
-    # 2. Prepare Data
+
+    # Prepare Data
     transform = transforms.Compose([transforms.Resize((224, 224)), transforms.ToTensor()])
     test_dataset = MVTecDataset(root_dir="Datat/MVTecAD", category=category, is_train=False, transform=transform)
     test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False)
 
-    # 3. Store Results
+    # Plot improvement in loss
+    try:
+        train_loss = np.load(f"loss_history_{category}.npy")
+        plt.figure(figsize=(10, 5))
+        plt.plot(train_loss, label='Training Loss', color='orange')
+        plt.title(f"Loss Minimization during Training for {category.upper()}")
+        plt.xlabel("Epochs")
+        plt.ylabel("Loss (MSE + SSIM)")
+        plt.legend()
+        plt.grid(True)
+        plt.show()
+    except FileNotFoundError:
+        print("Warning: Loss history file not found. Run train.py first to generate it.")
+        
+        
+    # Store Results
     y_true = []
     y_pred = []
     
     
-    threshold = 0.12
+    threshold = 0.05
 
     print(f"Testing {len(test_dataset)} images...")
+
 
     with torch.no_grad():
         for sample in test_loader:
@@ -52,8 +70,8 @@ def evaluate_and_plot(category):
             y_true.append(label)
             y_pred.append(prediction)
 
-    # 4. Create the Confusion Matrix Plot
-    # This shows the True Positives, True Negatives, False Positives, False Negatives
+    # Create the Confusion Matrix Plot
+    
     cm = confusion_matrix(y_true, y_pred)
     disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=['Good', 'Anomaly'])
     
@@ -62,10 +80,19 @@ def evaluate_and_plot(category):
     plt.title(f"Classification Results for {category.upper()}")
     plt.show()
 
-    # 5. Print Summary
-    accuracy = (np.array(y_true) == np.array(y_pred)).sum() / len(y_true)
-    print(f"Final Accuracy: {accuracy*100:.2f}%")
+    # Print Summary
+    accuracy = accuracy_score(y_true, y_pred)
+    precision = precision_score(y_true, y_pred)
+    recall = recall_score(y_true, y_pred)
+    f1 = f1_score(y_true, y_pred)
+    
+    print("-" * 30)
+    print(f"Final Accuracy:  {accuracy*100:.2f}%")
+    print(f"Final Precision: {precision*100:.2f}%")
+    print(f"Final Recall: {recall*100:.2f}%")
+    print(f"Final F1 Score:  {f1*100:.2f}%")
+    print("-" * 30)
 
 if __name__ == "__main__":
-    import numpy as np # Adding numpy for accuracy calculation
-    evaluate_and_plot("cable")
+    import numpy as np 
+    evaluate_and_plot("bottle")

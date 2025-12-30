@@ -6,7 +6,6 @@ class Autoencoder(nn.Module):
         super(Autoencoder, self).__init__()
         
         # --- ENCODER ---
-        # We increase filters and add a layer to shrink the spatial size further
         self.encoder = nn.Sequential(
             # 224x224 -> 112x112
             nn.Conv2d(3, 64, kernel_size=4, stride=2, padding=1), 
@@ -20,8 +19,8 @@ class Autoencoder(nn.Module):
             nn.Conv2d(128, 256, kernel_size=4, stride=2, padding=1),
             nn.ReLU(),
             
-            # NEW LAYER: 28x28 -> 14x14 (Tighter Bottleneck)
-            # This forces the model to ignore small defects/noise
+            # 28x28 -> 14x14 
+            
             nn.Conv2d(256, 512, kernel_size=4, stride=2, padding=1),
             nn.ReLU()
         )
@@ -43,7 +42,7 @@ class Autoencoder(nn.Module):
             
             # 112x112 -> 224x224
             nn.ConvTranspose2d(64, 3, kernel_size=4, stride=2, padding=1),
-            nn.Sigmoid() # Keep pixels 0-1 to match normalized input
+            nn.Sigmoid() 
         )
 
     def forward(self, x):
