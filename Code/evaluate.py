@@ -7,6 +7,7 @@ from dataset import MVTecDataset
 from model import Autoencoder
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, accuracy_score, precision_score, f1_score, recall_score
 import matplotlib.pyplot as plt
+from threshold import calculate_threshold
 
 def evaluate_and_plot(category):
     
@@ -41,8 +42,8 @@ def evaluate_and_plot(category):
     y_true = []
     y_pred = []
     
-    
-    threshold = 0.05
+    # Calculate threshold
+    threshold = calculate_threshold(category)
 
     print(f"Testing {len(test_dataset)} images...")
 
@@ -58,12 +59,7 @@ def evaluate_and_plot(category):
             loss_ssim = (1 - ssim(reconstruction, img, data_range=1.0)).item()
             
             score = loss_mse + loss_ssim
-            # label is 0 for Good and 1 for Anomaly/Bad in MVTec
-            if label == 0:
-                print(f"Good score     {score} \n")
-            else:
-                print(f"Bad score     {score} \n")
-            
+        
             # Prediction
             prediction = 1 if score > threshold else 0
             
