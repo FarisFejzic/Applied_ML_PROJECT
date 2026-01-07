@@ -11,4 +11,5 @@
    - Install libraries: pip install -r requirements.txt
 
 3. RUNNING:
-   - Run 'python main.py' to execute the detection system.
+   - Run 'python train.py' to execute the training model (Not required as we have already saved autoencoder_bottle.pth in the repository)
+   - Run 'python evaluate.py' to produce results
