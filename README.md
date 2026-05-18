@@ -10,9 +10,15 @@ A deep learning pipeline for unsupervised anomaly detection on the [MVTec AD dat
 
 The core idea is simple: train an autoencoder only on **normal (good)** images. Because it has never seen defects, it learns to reconstruct healthy textures and structures well — but struggles to reconstruct anomalous regions. A high reconstruction error therefore signals a defect.
 
+An autoencoder works in two stages. The **encoder** compresses an input image down into a compact latent representation, forcing the network to learn only the most essential features of normal appearance. The **decoder** then attempts to reconstruct the original image from that compressed representation. When trained exclusively on defect-free samples, the model becomes very good at reproducing normal patterns — surface textures, shapes, colours — but has no learned representation for scratches, cracks, or other anomalies. When such an image is passed through the network, the unusual regions are reconstructed poorly, producing a noticeably higher error.
+
+To capture both pixel-level differences and perceptual structure, the reconstruction error combines two complementary metrics:
+
 **Reconstruction score** = MSE loss + (1 − SSIM)
 
-At evaluation time, images scoring above a statistically derived threshold are classified as anomalous.
+MSE (Mean Squared Error) penalises raw pixel differences, while SSIM (Structural Similarity Index) measures higher-level similarity in luminance, contrast, and structure. Using both makes the score more robust than either metric alone.
+
+At evaluation time, a threshold is automatically calibrated from the model's scores on known-good training images. Any test image scoring above that threshold is classified as anomalous.
 
 ---
 
